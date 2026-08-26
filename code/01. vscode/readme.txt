@@ -8,33 +8,34 @@ don't have to copy/paste each line from the slide yourself.
 
 Why use it?
 -----------
-- Handles Mac and Linux/WSL2 differences automatically — you don't
-  need to figure out which commands apply to your computer.
+- Faster: one command instead of many.
 - Fewer typos: nothing to mistype or paste wrong.
-- Same result either way — if you'd rather type the commands from
-  "03. php installation.md" yourself, that works too. This script is
-  a shortcut, not a requirement.
+- Same result either way — if you'd rather follow
+  "pdf/01. vscode.pdf" yourself, that works too. This script is a
+  shortcut, not a requirement.
 
 How to use it
 --------------
 1. Open a terminal (VS Code's integrated terminal is fine:
-   Ctrl+` / Cmd+`). Windows users: use your WSL2 terminal, not
-   PowerShell/cmd.
+   Ctrl+` / Cmd+`).
 2. Navigate into this folder:
-       cd "code/03. php installation"
+       cd "code/01. vscode"
 3. Run it:
        bash run.sh
 
 What it does
 ------------
-- Detects whether you're on Mac, WSL2, or native Linux.
-- Installs PHP plus the extensions this course uses (curl, json,
-  mbstring, xml, zip).
-- Installs Composer, the PHP package manager, verifying it's the
-  genuine installer before running it (skips this if Composer is
-  already installed).
-- Runs `php -r 'echo "PHP works\n";'` at the end to confirm PHP
-  actually executes, not just that it's installed.
+- Checks whether the `code` command (VS Code's CLI) is already
+  available.
+- On Mac: installs VS Code automatically via Homebrew if it's
+  missing.
+- On WSL2: VS Code itself has to be installed on the Windows side
+  (not inside Linux), so the script just tells you what's missing
+  and points you to the right steps — it can't install it for you
+  from here.
+- On Ubuntu Linux: installs VS Code with Snap when Snap is available.
+- Prints the HW1 Markdown-preview verification step. PHP extensions
+  are optional and are not required for HW1.
 
 If something goes wrong
 ------------------------

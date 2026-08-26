@@ -8,12 +8,12 @@ don't have to copy/paste each line from the slide yourself.
 
 Why use it?
 -----------
-- Handles Mac and Linux/WSL2 differences automatically — you don't
+- Handles macOS and Ubuntu/WSL2 differences automatically — you don't
   need to figure out which commands apply to your computer.
 - Starts the MySQL server and checks it actually works, not just
   that it's installed.
-- Same result either way — if you'd rather type the commands from
-  "04. mysql installation.md" yourself, that works too. This script
+- Same result either way — if you'd rather follow
+  "pdf/04. mysql installation.pdf" yourself, that works too. This script
   is a shortcut, not a requirement.
 
 How to use it
@@ -28,7 +28,8 @@ How to use it
 
 What it does
 ------------
-- Detects whether you're on Mac, WSL2, or native Linux.
+- Detects whether you're on macOS, WSL2, or Linux. The Linux helper
+  supports Ubuntu and other distributions that provide `apt`.
 - Installs MySQL and starts the server (using `service`, not
   `systemctl`, on WSL2 — see the slide for why).
 - Runs a real `SELECT VERSION();` query at the end to confirm the

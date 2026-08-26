@@ -50,5 +50,8 @@ fi
 
 code --version
 echo ""
-echo "Now install the \"PHP Intelephense\" and \"PHP Debug\" extensions from"
-echo "the Extensions view (Ctrl+Shift+X / Cmd+Shift+X)."
+echo "HW1 verification: open HW1.md and use Ctrl+Shift+V / Cmd+Shift+V"
+echo "to confirm that the built-in Markdown preview renders correctly."
+echo ""
+echo "Optional for later PHP work: install PHP Intelephense and PHP Debug"
+echo "from the Extensions view (Ctrl+Shift+X / Cmd+Shift+X)."

@@ -25,13 +25,18 @@ if [ "$OS" = "mac" ]; then
     # so the manual "download + move to /usr/local/bin" install used
     # below for Linux/WSL2 would fail here with Permission denied.
     brew install php composer
-    php -v
+    php --version
     composer --version
 else
-    # Linux / WSL2 (Ubuntu)
+    # Ubuntu / WSL2 (Ubuntu)
+    if ! command -v apt >/dev/null 2>&1; then
+        echo "ERROR: This helper supports macOS and Ubuntu/WSL2 only." >&2
+        echo "For another Linux distribution, follow its PHP package instructions." >&2
+        exit 1
+    fi
     sudo apt update
-    sudo apt install -y php php-cli php-mysql php-curl php-json php-mbstring php-xml php-zip
-    php -v
+    sudo apt install -y curl php php-cli php-mysql php-curl php-mbstring php-xml php-zip
+    php --version
 
     ### Composer (PHP Package Manager) — verified install
     if command -v composer >/dev/null 2>&1; then

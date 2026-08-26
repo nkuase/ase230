@@ -29,10 +29,15 @@ if [ "$OS" = "mac" ]; then
     mysql --version
     mysql -u root -e "SELECT VERSION();"
 else
-    # Linux / WSL2 (Ubuntu). Use `service`, not `systemctl` — most WSL2
+    # Ubuntu / WSL2 (Ubuntu). Use `service`, not `systemctl` — most WSL2
     # distros don't run systemd by default, and `systemctl` fails there
     # ("System has not been booted with systemd"). `service` works
     # whether or not systemd is running, so it's the safer command here.
+    if ! command -v apt >/dev/null 2>&1; then
+        echo "ERROR: This helper supports macOS and Ubuntu/WSL2 only." >&2
+        echo "For another Linux distribution, follow its MySQL package instructions." >&2
+        exit 1
+    fi
     sudo apt update
     sudo apt install -y mysql-server
     sudo service mysql start
@@ -46,7 +51,3 @@ fi
 
 echo ""
 echo "Install complete."
-echo ""
-echo "Note: some project weeks later in the course use MySQL via Docker"
-echo "Compose instead of this local install — follow the project's"
-echo "docker-compose.yml when one is provided."
