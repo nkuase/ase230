@@ -19,6 +19,8 @@ if [ "$OS" = "mac" ]; then
         # though the install just succeeded.
         if [ -x /opt/homebrew/bin/brew ]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -x /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
         fi
     fi
     brew install mysql
@@ -34,7 +36,7 @@ else
     # ("System has not been booted with systemd"). `service` works
     # whether or not systemd is running, so it's the safer command here.
     if ! command -v apt >/dev/null 2>&1; then
-        echo "ERROR: This helper supports macOS and Ubuntu/WSL2 only." >&2
+        echo "ERROR: This helper supports macOS and Linux distributions with apt (Ubuntu, WSL2, Debian, etc.)." >&2
         echo "For another Linux distribution, follow its MySQL package instructions." >&2
         exit 1
     fi

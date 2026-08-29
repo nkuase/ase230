@@ -1,0 +1,46 @@
+MYSQL SETUP COMMANDS
+====================
+
+1. Open the MySQL administrator shell.
+
+WSL2/Ubuntu:
+    sudo mysql
+
+macOS with Homebrew:
+    mysql -u root
+
+If your macOS root account has a password:
+    mysql -u root -p
+
+2. Run these SQL commands inside the MySQL shell.
+
+CREATE DATABASE IF NOT EXISTS studentdb;
+USE studentdb;
+
+CREATE TABLE IF NOT EXISTS students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(150),
+  age INT,
+  major VARCHAR(100),
+  year INT
+);
+
+CREATE USER IF NOT EXISTS 'ase230'@'localhost' IDENTIFIED BY 'ase230pass';
+ALTER USER 'ase230'@'localhost' IDENTIFIED BY 'ase230pass';
+GRANT ALL PRIVILEGES ON studentdb.* TO 'ase230'@'localhost';
+
+SHOW TABLES;
+EXIT;
+
+OPTIONAL: RESET THE CLASS DEMO
+==============================
+
+Each run creates a new Alice, demonstrating persistent data. If you want a
+clean table before repeating the classroom demo, enter the administrator shell,
+select studentdb, and run the following command intentionally:
+
+TRUNCATE TABLE students;
+
+TRUNCATE permanently removes every student and resets AUTO_INCREMENT. Never use
+it on data you need to keep.

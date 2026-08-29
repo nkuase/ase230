@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Token Demo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .container { 
+            background: #f5f5f5; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 10px 0; 
+        }
+        input, button { 
+            padding: 10px; 
+            margin: 5px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+        .response { 
+            background: #e9ecef; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            white-space: pre-wrap; 
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .token-display {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JWT Token Authentication Demo</h1>
+    
+    <div class="container">
+        <h2>Step 1: Login to Get Token</h2>
+        <p>Demo users: <code>john/Secret123</code> or <code>admin/Admin123</code></p>
+        <input type="text" id="username" placeholder="Username" value="john">
+        <input type="password" id="password" placeholder="Password" value="Secret123">
+        <button onclick="login()">Login</button>
+        <div id="loginResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Step 2: Access Protected Resource</h2>
+        <p>Use the token from Step 1 to access protected data</p>
+        <input type="text" id="token" placeholder="JWT Token (will be filled automatically)" style="width: 100%;">
+        <button onclick="accessProtected()">Access Protected Route</button>
+        <div id="protectedResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Understanding JWT Structure</h2>
+        <p>A JWT has 3 parts separated by dots:</p>
+        <ul>
+            <li><strong>Header:</strong> Algorithm and token type</li>
+            <li><strong>Payload:</strong> User data and claims</li>
+            <li><strong>Signature:</strong> Verification signature</li>
+        </ul>
+        <div id="tokenAnalysis" style="display:none;">
+            <h3>Your Token Analysis:</h3>
+            <div id="tokenParts"></div>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const responseDiv = document.getElementById('loginResponse');
+            
+            try {
+                const response = await fetch('login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `✅ Login Successful!\n\n${JSON.stringify(data, null, 2)}`;
+                    document.getElementById('token').value = data.token;
+                    analyzeToken(data.token);
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.innerHTML = `❌ Login Failed:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+                
+                responseDiv.style.display = 'block';
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = `❌ Error: ${error.message}`;
+                responseDiv.style.display = 'block';
+            }
+        }
+
+        async function accessProtected() {
+            const token = document.getElementById('token').value;
+            const responseDiv = document.getElementById('protectedResponse');
+            
+            if (!token) {
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = '❌ Please login first to get a token';
+                responseDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('protected.php', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `✅ Protected Access Granted!\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.innerHTML = `❌ Access Denied:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+                
+                responseDiv.style.display = 'block';
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = `❌ Error: ${error.message}`;
+                responseDiv.style.display = 'block';
+            }
+        }
+
+        function analyzeToken(token) {
+            const parts = token.split('.');
+            if (parts.length !== 3) return;
+            
+            try {
+                const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                
+                document.getElementById('tokenAnalysis').style.display = 'block';
+                document.getElementById('tokenParts').innerHTML = `
+                    <div class="token-display">
+                        <strong>Header (Algorithm & Type):</strong><br>
+                        ${JSON.stringify(header, null, 2)}
+                    </div>
+                    <div class="token-display">
+                        <strong>Payload (Claims & Data):</strong><br>
+                        ${JSON.stringify(payload, null, 2)}
+                    </div>
+                    <div class="token-display">
+                        <strong>Signature (Verification):</strong><br>
+                        ${parts[2]} (This is the cryptographic signature)
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Token analysis failed:', e);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -16,9 +16,12 @@ if [ "$OS" = "mac" ]; then
         # A fresh Homebrew install doesn't add itself to PATH in the
         # current shell right away — without this, the next `brew`
         # call below would fail with "brew: command not found" even
-        # though the install just succeeded.
+        # though the install just succeeded. Apple Silicon installs to
+        # /opt/homebrew; Intel Macs install to /usr/local.
         if [ -x /opt/homebrew/bin/brew ]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -x /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
         fi
     fi
     # Composer via Homebrew too — /usr/local/bin is root-owned on Mac,
@@ -30,7 +33,7 @@ if [ "$OS" = "mac" ]; then
 else
     # Ubuntu / WSL2 (Ubuntu)
     if ! command -v apt >/dev/null 2>&1; then
-        echo "ERROR: This helper supports macOS and Ubuntu/WSL2 only." >&2
+        echo "ERROR: This helper supports macOS and Linux distributions with apt (Ubuntu, WSL2, Debian, etc.)." >&2
         echo "For another Linux distribution, follow its PHP package instructions." >&2
         exit 1
     fi

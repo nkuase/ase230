@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Simple PHP API Test</title>
+  <style>
+    #result {
+      background: #f5f5f5;
+      padding: 1em;
+      border: 1px solid #ccc;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Simple PHP API Test Interface</h1>
+
+    <!-- Button to trigger API call -->
+    <button onclick="getApiInfo()">Get API Information</button>
+
+    <!-- Area to display results -->
+    <div id="result" class="result">
+      Click any button above to test the API...
+    </div>
+  </div>
+
+  <script>/* JavaScript code */
+    // Base URL for our PHP API
+    const API_BASE = '/index.php';
+
+    // Function to make API calls
+    async function apiCall(endpoint) {
+      try {
+        // Make the request
+        const response = await fetch(API_BASE + endpoint);
+        const data = await response.json();
+
+        // Display the result
+        document.getElementById('result').textContent =
+          JSON.stringify(data, null, 2);
+
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function getApiInfo() {
+      apiCall('/api');  // Calls our API at /index.php/
+    }
+  </script>
+</body>
+
+</html>
