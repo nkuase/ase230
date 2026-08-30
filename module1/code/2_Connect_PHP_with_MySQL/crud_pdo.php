@@ -59,6 +59,8 @@ $student = $stmt->fetch();
 
 if ($student) {
     echo "Found {$student['name']} with ID {$student['id']}<br>";
+} else {
+    echo "Student not found<br>";
 }
 
 // UPDATE
@@ -72,6 +74,7 @@ $stmt->execute([
     ':year' => 4,
     ':id' => $aliceId,
 ]);
+$updatedRows = $stmt->rowCount();
 echo "Updated Alice with ID {$aliceId}<br>";
 
 // DELETE
@@ -79,6 +82,7 @@ echo "<h2>DELETE</h2>";
 $sql = "DELETE FROM students WHERE id = :id";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([':id' => $bobId]);
+$deletedRows = $stmt->rowCount();
 echo "Deleted Bob with ID {$bobId}<br>";
 
 // READ final results
@@ -92,3 +96,8 @@ foreach ($students as $student) {
     echo "ID: {$student['id']} - Name: {$student['name']}"
        . " - Major: {$student['major']} - Year: {$student['year']}<br>";
 }
+
+// Row counts
+echo "<h2>Row Counts</h2>";
+echo "Updated rows: {$updatedRows}<br>";
+echo "Deleted rows: {$deletedRows}<br>";

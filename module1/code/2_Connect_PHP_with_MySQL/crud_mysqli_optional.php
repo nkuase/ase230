@@ -1,5 +1,5 @@
 <?php
-// OPTIONAL: Legacy MySQLi CRUD reference.
+// OPTIONAL: MySQLi CRUD reference (MySQL-specific alternative).
 // The required course example is crud_pdo.php.
 
 $conn = new mysqli("localhost", "ase230", "ase230pass", "studentdb");

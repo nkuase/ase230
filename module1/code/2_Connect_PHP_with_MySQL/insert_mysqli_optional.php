@@ -1,5 +1,5 @@
 <?php
-// OPTIONAL: Legacy MySQLi version of the first INSERT example.
+// OPTIONAL: MySQLi version of the first INSERT example (MySQL-specific alternative).
 // The required course examples use PDO; see index_pdo.php.
 
 $conn = new mysqli("localhost", "ase230", "ase230pass", "studentdb");

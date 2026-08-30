@@ -41,8 +41,9 @@ Optional MySQLi reference
 - insert_mysqli_optional.php shows the first INSERT using MySQLi.
 - crud_mysqli_optional.php shows CRUD using MySQLi.
 
-MySQLi is not part of the required learning path. Use these files only when
-comparing syntax or reading an older PHP project.
+MySQLi is an optional MySQL-specific interface and not part of the required
+learning path. Use these files when comparing syntax or reading existing PHP
+projects.
 
 If something goes wrong
 ------------------------
