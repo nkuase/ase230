@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS students (
 
 CREATE USER IF NOT EXISTS 'ase230'@'localhost' IDENTIFIED BY 'ase230pass';
 ALTER USER 'ase230'@'localhost' IDENTIFIED BY 'ase230pass';
-GRANT ALL PRIVILEGES ON studentdb.* TO 'ase230'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON studentdb.* TO 'ase230'@'localhost';
 
 SHOW TABLES;
 EXIT;
