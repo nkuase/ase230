@@ -26,5 +26,26 @@ These examples correspond to `src/3_Request_and_Response_with_PHP`.
      -d '{"name":"Alice Updated"}'
    ```
 
+4. Send URL-encoded form data with POST or PUT:
+
+   ```bash
+   curl -X POST http://localhost:8000/methods.php \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "name=Alice&email=alice@example.com"
+
+   curl -X PUT http://localhost:8000/methods.php \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "name=Alice+Updated"
+   ```
+
+5. Upload a file for inspection (the example does not save it):
+
+   ```bash
+   curl -X POST http://localhost:8000/upload.php \
+     -F "document=@README.md" \
+     -F "description=Lesson notes"
+   ```
+
 The examples intentionally focus on method, path, query parameters, headers,
-body, status code, and JSON response—the core concepts in the Week 4 material.
+body, form data, file metadata, status code, and JSON response—the core
+concepts in the Week 4 material.

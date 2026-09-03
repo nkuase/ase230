@@ -19,7 +19,7 @@ Required learning path
 ----------------------
 1. Open http://localhost:8000/index_pdo.php
    - Makes the first PDO connection and inserts one student.
-   - Corresponds to "2. Simple_PHP_Server_with_MySQL.md".
+   - Corresponds to "2. Connect_PHP_Server_with_MySQL.md".
 2. Open http://localhost:8000/crud_pdo.php
    - Runs Create, Read, Update, and Delete in one file.
    - Corresponds to "3. CRUD_operation_using_PDO.md".
@@ -47,6 +47,6 @@ projects.
 
 If something goes wrong
 ------------------------
-Check the Optional troubleshooting slides first. Computer configurations vary,
+Check the Troubleshooting and Security slides (document 4) first. Computer configurations vary,
 so if the issue continues, contact or visit the professor and we will work
 through it together.

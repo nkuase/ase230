@@ -12,14 +12,20 @@ if (!in_array($method, ['POST', 'PUT'], true)) {
 }
 
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$isJson = str_contains($contentType, 'application/json');
 $rawBody = file_get_contents('php://input');
-$data = str_contains($contentType, 'application/json')
-    ? json_decode($rawBody, true)
-    : $_POST;
+
+if ($isJson) {
+    $data = json_decode($rawBody, true);
+} elseif ($method === 'POST') {
+    $data = $_POST;
+} else {
+    parse_str($rawBody, $data);
+}
 
 if (!is_array($data)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Request body must contain valid JSON']);
+    echo json_encode(['error' => 'Invalid request body data']);
     exit;
 }
 
