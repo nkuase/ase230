@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST API Testing - Student Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #666; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .config {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 REST API Testing Tutorial</h1>
+        <p>This page demonstrates how to test a REST API using JavaScript. We'll test our Student Management API with simple, educational examples.</p>
+        
+        <div class="config">
+            <h3>⚙️ Configuration</h3>
+            <p><strong>API Base URL:</strong> <span id="baseUrl">http://localhost:8000</span></p>
+            <p><strong>Note:</strong> Make sure your PHP API server is running on port 8000</p>
+            <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="API Base URL">
+            <button onclick="updateBaseUrl()">Update URL</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Part 1: Basic Connection Tests</h2>
+        <p>First, let's test if our API server is running and responding correctly.</p>
+        
+        <div class="test-section">
+            <h3>Test 1.1: Server Connection</h3>
+            <p>This test checks if we can connect to the API server.</p>
+            <button onclick="testServerConnection()">Run Test</button>
+            <div id="connection-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1.2: API Root Endpoint</h3>
+            <p>This test verifies that the root endpoint returns API information.</p>
+            <button onclick="testApiRoot()">Run Test</button>
+            <div id="api-root-result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>✅ Part 2: Functional Tests (Unit Test Style)</h2>
+        <p>Now let's test if the API returns the data we expect, just like unit tests.</p>
+
+        <div class="test-section">
+            <h3>Test 2.1: Get All Students</h3>
+            <p>Tests if GET /students returns the expected data structure.</p>
+            <button onclick="testGetAllStudents()">Run Test</button>
+            <div id="get-all-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.2: Get Single Student</h3>
+            <p>Tests if GET /students/1 returns a specific student correctly.</p>
+            <button onclick="testGetSingleStudent()">Run Test</button>
+            <div id="get-single-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.3: Create New Student</h3>
+            <p>Tests if POST /students creates a new student with correct data.</p>
+            <button onclick="testCreateStudent()">Run Test</button>
+            <div id="create-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.4: Update Student</h3>
+            <p>Tests if PUT /students/{id} updates a student correctly.</p> 
+            <button onclick="testUpdateStudent()">Run Test</button>
+            <div id="update-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.5: Delete Student</h3>
+            <p>Tests if DELETE /students/{id} removes a student correctly.</p>
+            <button onclick="testDeleteStudent()">Run Test</button>
+            <div id="delete-result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🚀 Run All Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="all-tests-result"></div>
+    </div>
+
+    <script>
+        // Global variable for API base URL
+        let API_BASE_URL = 'http://localhost:8000';
+
+        // Update base URL function
+        function updateBaseUrl() {
+            const newUrl = document.getElementById('apiUrl').value;
+            API_BASE_URL = newUrl;
+            document.getElementById('baseUrl').textContent = newUrl;
+            displayResult('connection-result', 'info', `Updated API base URL to: ${newUrl}`);
+        }
+
+        // Helper function to display test results
+        function displayResult(elementId, type, message, data = null) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="test-result ${type}">
+                    <strong>${message}</strong>
+                    ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                </div>
+            `;
+        }
+
+        // Helper function to make HTTP requests
+        async function makeRequest(url, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+                const responseData = await response.json();
+                
+                return {
+                    status: response.status,
+                    data: responseData,
+                    ok: response.ok
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    error: error.message,
+                    ok: false
+                };
+            }
+        }
+
+        // Test 1.1: Server Connection
+        async function testServerConnection() {
+            displayResult('connection-result', 'info', 'Testing server connection...');
+            
+            const result = await makeRequest(API_BASE_URL);
+            
+            if (result.ok) {
+                displayResult('connection-result', 'pass', 
+                    '✅ PASS: Server is responding correctly!', result.data);
+            } else {
+                displayResult('connection-result', 'fail', 
+                    `❌ FAIL: Server connection failed. Status: ${result.status}`, 
+                    result.error ? { error: result.error } : result.data);
+            }
+        }
+
+        // Test 1.2: API Root Endpoint
+        async function testApiRoot() {
+            displayResult('api-root-result', 'info', 'Testing API root endpoint...');
+            
+            const result = await makeRequest(API_BASE_URL);
+            
+            if (result.ok && result.data.message && result.data.endpoints) {
+                displayResult('api-root-result', 'pass', 
+                    '✅ PASS: API root returns expected structure!', result.data);
+            } else {
+                displayResult('api-root-result', 'fail', 
+                    '❌ FAIL: API root does not return expected structure', result.data);
+            }
+        }
+
+        // Test 2.1: Get All Students
+        async function testGetAllStudents() {
+            displayResult('get-all-result', 'info', 'Testing GET /students...');
+            
+            const result = await makeRequest(`${API_BASE_URL}/students`);
+            
+            if (result.ok && result.data.success && Array.isArray(result.data.data)) {
+                const students = result.data.data;
+                let testsPassed = 0;
+                let totalTests = 3;
+
+                // Test 1: Response structure
+                if (result.data.success && result.data.data && typeof result.data.count === 'number') {
+                    testsPassed++;
+                }
+
+                // Test 2: Students array format
+                if (students.length > 0) {
+                    const firstStudent = students[0];
+                    if (firstStudent.id && firstStudent.name && firstStudent.email) {
+                        testsPassed++;
+                    }
+                }
+
+                // Test 3: Count matches array length
+                if (result.data.count === students.length) {
+                    testsPassed++;
+                }
+
+                const message = testsPassed === totalTests ? 
+                    `✅ PASS: All tests passed (${testsPassed}/${totalTests})` :
+                    `⚠️ PARTIAL: ${testsPassed}/${totalTests} tests passed`;
+                
+                displayResult('get-all-result', testsPassed === totalTests ? 'pass' : 'fail', 
+                    message, result.data);
+            } else {
+                displayResult('get-all-result', 'fail', 
+                    '❌ FAIL: Unexpected response structure', result.data);
+            }
+        }
+
+        // Test 2.2: Get Single Student
+        async function testGetSingleStudent() {
+            displayResult('get-single-result', 'info', 'Testing GET /students/1...');
+            
+            const result = await makeRequest(`${API_BASE_URL}/students/1`);
+            
+            if (result.ok && result.data.success && result.data.data) {
+                const student = result.data.data;
+                let testsPassed = 0;
+                let totalTests = 4;
+
+                // Test 1: Student has ID
+                if (student.id === 1) testsPassed++;
+
+                // Test 2: Student has name
+                if (student.name && typeof student.name === 'string') testsPassed++;
+
+                // Test 3: Student has email
+                if (student.email && student.email.includes('@')) testsPassed++;
+
+                // Test 4: Student has major and year
+                if (student.major && typeof student.year === 'number') testsPassed++;
+
+                const message = testsPassed === totalTests ? 
+                    `✅ PASS: All tests passed (${testsPassed}/${totalTests})` :
+                    `⚠️ PARTIAL: ${testsPassed}/${totalTests} tests passed`;
+                
+                displayResult('get-single-result', testsPassed === totalTests ? 'pass' : 'fail', 
+                    message, result.data);
+            } else {
+                displayResult('get-single-result', 'fail', 
+                    '❌ FAIL: Could not get student or unexpected response', result.data);
+            }
+        }
+
+        // Test 2.3: Create New Student
+        async function testCreateStudent() {
+            displayResult('create-result', 'info', 'Testing POST /students...');
+            
+            const newStudent = {
+                name: 'Test Student',
+                email: 'test@university.edu',
+                major: 'Computer Science',
+                year: 2
+            };
+
+            const result = await makeRequest(`${API_BASE_URL}/students`, 'POST', newStudent);
+            
+            if (result.status === 201 && result.data.success && result.data.data) {
+                const createdStudent = result.data.data;
+                let testsPassed = 0;
+                let totalTests = 5;
+
+                // Test 1: Student has new ID
+                if (createdStudent.id && createdStudent.id > 0) testsPassed++;
+
+                // Test 2: Name matches
+                if (createdStudent.name === newStudent.name) testsPassed++;
+
+                // Test 3: Email matches
+                if (createdStudent.email === newStudent.email) testsPassed++;
+
+                // Test 4: Major matches
+                if (createdStudent.major === newStudent.major) testsPassed++;
+
+                // Test 5: Has timestamps
+                if (createdStudent.created_at && createdStudent.updated_at) testsPassed++;
+
+                const message = testsPassed === totalTests ? 
+                    `✅ PASS: All tests passed (${testsPassed}/${totalTests})` :
+                    `⚠️ PARTIAL: ${testsPassed}/${totalTests} tests passed`;
+                
+                displayResult('create-result', testsPassed === totalTests ? 'pass' : 'fail', 
+                    message, result.data);
+            } else {
+                displayResult('create-result', 'fail', 
+                    '❌ FAIL: Could not create student or unexpected response', result.data);
+            }
+        }
+
+        // Test 2.4: Update Student
+        async function testUpdateStudent() {
+            displayResult('update-result', 'info', 'Testing PUT /students/2...');
+            
+            const updateData = {
+                name: 'Updated Bob Smith',
+                major: 'Data Science'
+            };
+
+            const result = await makeRequest(`${API_BASE_URL}/students/2`, 'PUT', updateData);
+            
+            if (result.ok && result.data.success && result.data.data) {
+                const updatedStudent = result.data.data;
+                let testsPassed = 0;
+                let totalTests = 3;
+
+                // Test 1: Name was updated
+                if (updatedStudent.name === updateData.name) testsPassed++;
+
+                // Test 2: Major was updated
+                if (updatedStudent.major === updateData.major) testsPassed++;
+
+                // Test 3: Updated timestamp changed
+                if (updatedStudent.updated_at !== updatedStudent.created_at) testsPassed++;
+
+                const message = testsPassed === totalTests ? 
+                    `✅ PASS: All tests passed (${testsPassed}/${totalTests})` :
+                    `⚠️ PARTIAL: ${testsPassed}/${totalTests} tests passed`;
+                
+                displayResult('update-result', testsPassed === totalTests ? 'pass' : 'fail', 
+                    message, result.data);
+            } else {
+                displayResult('update-result', 'fail', 
+                    '❌ FAIL: Could not update student or unexpected response', result.data);
+            }
+        }
+
+        // Test 2.5: Delete Student
+        async function testDeleteStudent() {
+            displayResult('delete-result', 'info', 'Testing DELETE /students/3...');
+            
+            const result = await makeRequest(`${API_BASE_URL}/students/3`, 'DELETE');
+            
+            if (result.ok && result.data.success) {
+                // Now verify the student is really deleted
+                const verifyResult = await makeRequest(`${API_BASE_URL}/students/3`);
+                
+                if (verifyResult.status === 404) {
+                    displayResult('delete-result', 'pass', 
+                        '✅ PASS: Student deleted successfully and verified!', result.data);
+                } else {
+                    displayResult('delete-result', 'fail', 
+                        '❌ FAIL: Student was not actually deleted', verifyResult.data);
+                }
+            } else {
+                displayResult('delete-result', 'fail', 
+                    '❌ FAIL: Could not delete student or unexpected response', result.data);
+            }
+        }
+
+        // Run all tests sequentially
+        async function runAllTests() {
+            displayResult('all-tests-result', 'info', 'Running all tests...');
+            
+            const tests = [
+                { name: 'Server Connection', func: testServerConnection },
+                { name: 'API Root', func: testApiRoot },
+                { name: 'Get All Students', func: testGetAllStudents },
+                { name: 'Get Single Student', func: testGetSingleStudent },
+                { name: 'Create Student', func: testCreateStudent },
+                { name: 'Update Student', func: testUpdateStudent },
+                { name: 'Delete Student', func: testDeleteStudent }
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                displayResult('all-tests-result', 'info', 
+                    `Running test ${i + 1}/${tests.length}: ${tests[i].name}...`);
+                await tests[i].func();
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            displayResult('all-tests-result', 'pass', 
+                '✅ All tests completed! Check individual results above.');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            displayResult('connection-result', 'info', 'Click "Run Test" to start testing...');
+        });
+    </script>
+</body>
+</html>
