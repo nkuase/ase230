@@ -38,6 +38,12 @@
       try {
         // Make the request
         const response = await fetch(API_BASE + endpoint);
+
+        // Check if request was successful
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
         // Display the result
@@ -46,11 +52,13 @@
 
       } catch (error) {
         console.error('Error:', error);
+        document.getElementById('result').textContent =
+          'Error: ' + error.message;
       }
     }
 
     function getApiInfo() {
-      apiCall('/api');  // Calls our API at /index.php/
+      apiCall('/api');  // Calls our API at /index.php/api
     }
   </script>
 </body>

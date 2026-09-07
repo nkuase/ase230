@@ -20,7 +20,7 @@
   <div class="container">
     <h1>Simple PHP API Test Interface</h1>
 
-    <form action="submit.php" method="post">
+    <form action="/index.php/submit" method="post">
       Name: <input type="text" name="name"><br>
       Email: <input type="email" name="email"><br>
       <input type="submit" value="Submit">
@@ -28,7 +28,7 @@
 
     <!-- Area to display results -->
     <div id="result" class="result">
-      Click any button above to test the API...
+      Submit the form to see the response...
     </div>
   </div>
 
@@ -44,6 +44,11 @@
           method: 'POST',
           body: formData
         });
+
+        // Convert HTTP failures into JavaScript errors
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const data = await response.json();
 
