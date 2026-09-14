@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Student API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005a87;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+
+        input,
+        select {
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Simple Student Management API - Test Page</h1>
+    <div id="file-protocol-warning" style="display:none; background:#fee2e2; border:2px solid #dc2626; color:#991b1b; padding:15px; border-radius:6px; margin:20px 0; font-size:15px; line-height:1.5;">
+        <strong>🚨 WARNING: You opened this file directly via <code>file://</code> protocol!</strong><br>
+        Browser security policies (CORS) block all API requests when loaded as a local file.<br>
+        You <strong>MUST</strong> open this page through your running PHP server at:<br>
+        <a href="http://localhost:8080/student_api_test.html" style="color:#b91c1c; font-weight:bold; font-size:16px;">http://localhost:8080/student_api_test.html</a>
+    </div>
+    <p>Use this page to test the REST API endpoints. Make sure your PHP server is running!</p>
+    <p>Check your localhost matches API_BASE. Always access via <code>http://localhost:8080/student_api_test.html</code>.</p>
+
+    <div class="test-section">
+        <h3>1. Get All Students</h3>
+        <button onclick="getAllStudents()">GET /students</button>
+        <pre id="all-students-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Get Single Student</h3>
+        <input type="number" id="get-student-id" placeholder="Student ID" value="1">
+        <button onclick="getStudent()">GET /students/{id}</button>
+        <pre id="single-student-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Create New Student</h3>
+        <input type="text" id="new-name" placeholder="Name" value="David Wilson"><br>
+        <input type="email" id="new-email" placeholder="Email" value="david.wilson@university.edu"><br>
+        <input type="text" id="new-major" placeholder="Major" value="Computer Science"><br>
+        <input type="number" id="new-year" placeholder="Year" value="1"><br>
+        <button onclick="createStudent()">POST /students</button>
+        <pre id="create-student-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Update Student</h3>
+        <input type="number" id="update-student-id" placeholder="Student ID" value="1"><br>
+        <input type="text" id="update-name" placeholder="New Name" value="Alice Smith"><br>
+        <input type="email" id="update-email" placeholder="New Email" value="alice.smith@university.edu"><br>
+        <input type="text" id="update-major" placeholder="New Major" value="Data Science"><br>
+        <input type="number" id="update-year" placeholder="New Year" value="4"><br>
+        <button onclick="updateStudent()">PUT /students/{id}</button>
+        <pre id="update-student-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Delete Student</h3>
+        <input type="number" id="delete-student-id" placeholder="Student ID" value="3">
+        <button onclick="deleteStudent()">DELETE /students/{id}</button>
+        <pre id="delete-student-result"></pre>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        if (window.location.protocol === 'file:') {
+            document.getElementById('file-protocol-warning').style.display = 'block';
+            setTimeout(() => {
+                alert('🚨 WARNING: Do NOT open this file directly from your filesystem (file://)!\n\nBrowser security blocks API requests from local files.\n\nPlease start the server and open:\nhttp://localhost:8080/student_api_test.html');
+            }, 100);
+        }
+
+        async function getAllStudents() {
+            const resultEl = document.getElementById('all-students-result');
+            try {
+                const response = await fetch(`${API_BASE}/students`);
+                const data = await response.json();
+                const prefix = response.ok ? '' : `HTTP ${response.status}: `;
+                resultEl.textContent = prefix + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'Request or response error: ' + error.message;
+            }
+        }
+
+        async function getStudent() {
+            const id = document.getElementById('get-student-id').value;
+            const resultEl = document.getElementById('single-student-result');
+            try {
+                const response = await fetch(`${API_BASE}/students/${id}`);
+                const data = await response.json();
+                const prefix = response.ok ? '' : `HTTP ${response.status}: `;
+                resultEl.textContent = prefix + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'Request or response error: ' + error.message;
+            }
+        }
+
+        async function createStudent() {
+            const studentData = {
+                name: document.getElementById('new-name').value,
+                email: document.getElementById('new-email').value,
+                major: document.getElementById('new-major').value,
+                year: parseInt(document.getElementById('new-year').value)
+            };
+
+            const resultEl = document.getElementById('create-student-result');
+            try {
+                const response = await fetch(`${API_BASE}/students`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(studentData)
+                });
+                const data = await response.json();
+                const prefix = response.ok ? '' : `HTTP ${response.status}: `;
+                resultEl.textContent = prefix + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'Request or response error: ' + error.message;
+            }
+        }
+
+        async function updateStudent() {
+            const id = document.getElementById('update-student-id').value;
+            const updateData = {
+                name: document.getElementById('update-name').value,
+                email: document.getElementById('update-email').value,
+                major: document.getElementById('update-major').value,
+                year: parseInt(document.getElementById('update-year').value)
+            };
+
+            const resultEl = document.getElementById('update-student-result');
+            try {
+                const response = await fetch(`${API_BASE}/students/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                const data = await response.json();
+                const prefix = response.ok ? '' : `HTTP ${response.status}: `;
+                resultEl.textContent = prefix + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'Request or response error: ' + error.message;
+            }
+        }
+
+        async function deleteStudent() {
+            const id = document.getElementById('delete-student-id').value;
+            const resultEl = document.getElementById('delete-student-result');
+            try {
+                const response = await fetch(`${API_BASE}/students/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                const prefix = response.ok ? '' : `HTTP ${response.status}: `;
+                resultEl.textContent = prefix + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'Request or response error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>
