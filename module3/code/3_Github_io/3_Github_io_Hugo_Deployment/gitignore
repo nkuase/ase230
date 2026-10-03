@@ -1,0 +1,26 @@
+# Hugo build output
+public/
+resources/_gen/
+.hugo_build.lock
+
+# Secrets (this repository is public)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.log

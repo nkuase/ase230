@@ -1,0 +1,49 @@
+services:
+  # NGINX Web Server
+  nginx:
+    build: ./docker/nginx
+    ports:
+      - "8000:80"   # Same host port as the previous PHP + NGINX example: stop that one first
+    volumes:
+      - ./student-api:/var/www/html
+    depends_on:
+      - php
+    networks:
+      - laravel-network
+
+  # PHP-FPM for Laravel
+  php:
+    build: ./docker/php
+    volumes:
+      - ./student-api:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - laravel-network
+
+  # MySQL Database (Custom Build)
+  mysql:
+    build: ./docker/mysql          # Use custom Dockerfile instead of official image
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - laravel-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

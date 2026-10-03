@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Bearer Token API Tests</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #666; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .test-section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .config { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; }
+        .config label { display: inline-block; width: 110px; }
+        .config input { width: 300px; padding: 4px; margin: 3px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        ul { margin: 6px 0; padding-left: 20px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Laravel Bearer Token API Tests</h1>
+        <p>This page calls the Laravel API (<code>run1-5-docker.sh</code>) from the browser with <code>fetch()</code>.
+           Each button runs one test. Read the code at the bottom of this file to see how a Bearer token is sent.</p>
+
+        <div class="config">
+            <h3>Configuration</h3>
+            <p>Start the containers first: <code>bash run1-5-docker.sh</code> (Docker, port 8000)</p>
+            <div><label for="apiUrl">API Base URL:</label> <input id="apiUrl" value="http://localhost:8000"></div>
+            <div><label for="email">Email:</label> <input id="email" value="student@university.edu"></div>
+            <div><label for="password">Password:</label> <input id="password" type="password" value="student123"></div>
+            <p>Current token: <strong id="tokenView">(none)</strong></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 1: Connection and Login</h2>
+
+        <div class="test-section">
+            <h3>Test 1.1: Server Connection</h3>
+            <p>GET /api/students is public and needs no token.</p>
+            <button onclick="testConnection()">Run Test</button>
+            <div id="t11"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1.2: Wrong Password</h3>
+            <p>POST /api/login with a wrong password must return 401 and no token.</p>
+            <button onclick="testWrongPassword()">Run Test</button>
+            <div id="t12"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1.3: Login</h3>
+            <p>POST /api/login returns a Bearer token. The page keeps it in a JavaScript variable.</p>
+            <button onclick="testLogin()">Run Test</button>
+            <div id="t13"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 2: Bearer Token Checks on GET /api/me</h2>
+
+        <div class="test-section">
+            <h3>Test 2.1: Missing Token</h3>
+            <p>No <code>Authorization</code> header: expect 401.</p>
+            <button onclick="testMissingToken()">Run Test</button>
+            <div id="t21"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.2: Invalid Token</h3>
+            <p><code>Authorization: Bearer invalid-token</code>: expect 401.</p>
+            <button onclick="testInvalidToken()">Run Test</button>
+            <div id="t22"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.3: Valid Token</h3>
+            <p>Send the token from the login: expect 200 and the logged-in user.</p>
+            <button onclick="testValidToken()">Run Test</button>
+            <div id="t23"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 3: Students (reads are public, writes need a token)</h2>
+
+        <div class="test-section">
+            <h3>Test 3.1: Get All Students</h3>
+            <p>GET /api/students: public.</p>
+            <button onclick="testGetAll()">Run Test</button>
+            <div id="t31"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.2: Get One Student</h3>
+            <p>GET /api/students/{id}: public. An unknown id returns 404.</p>
+            <button onclick="testGetOne()">Run Test</button>
+            <div id="t32"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.3: Create Student</h3>
+            <p>POST /api/students: 401 without a token, 201 with a token.</p>
+            <button onclick="testCreate()">Run Test</button>
+            <div id="t33"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.4: Update Student</h3>
+            <p>PUT /api/students/{id} with a token. Only the changed field is sent.</p>
+            <button onclick="testUpdate()">Run Test</button>
+            <div id="t34"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.5: Delete Student</h3>
+            <p>DELETE /api/students/{id} with a token. A later GET must return 404.</p>
+            <button onclick="testDelete()">Run Test</button>
+            <div id="t35"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.6: Validation Errors</h3>
+            <p>Bad input returns 422 with an <code>errors</code> object.</p>
+            <button onclick="testValidation()">Run Test</button>
+            <div id="t36"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 4: Logout</h2>
+
+        <div class="test-section">
+            <h3>Test 4.1: Logout Revokes the Token</h3>
+            <p>POST /api/logout deletes the token. The same token must then return 401.</p>
+            <button onclick="testLogout()">Run Test</button>
+            <div id="t41"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Run All Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="all"></div>
+    </div>
+
+    <script>
+        // The token lives only in this variable (not in localStorage), so reloading the page logs you out.
+        let token = null;
+        // The id of the student created by the tests, so update and delete can use it.
+        let createdId = null;
+
+        const baseUrl = () => document.getElementById('apiUrl').value.replace(/\/$/, '') + '/api';
+        const credentials = () => ({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        });
+        const newStudent = () => ({
+            name: 'Test Student',
+            email: `test.${Date.now()}@university.edu`,   // unique, because email must be unique
+            age: 20,
+            major: 'Computer Science',
+            year: 2
+        });
+
+        function setToken(value) {
+            token = value;
+            document.getElementById('tokenView').textContent = token ? token.slice(0, 12) + '...' : '(none)';
+        }
+
+        // --- One helper for all HTTP requests ---------------------------------------------
+        // bearer: the token to send, or null to send no Authorization header.
+        async function request(path, method = 'GET', data = null, bearer = null) {
+            // Accept: application/json makes Laravel return JSON errors (401, 404, 422)
+            // instead of redirecting to a login page.
+            const headers = { 'Accept': 'application/json' };
+            if (data !== null) headers['Content-Type'] = 'application/json';
+            if (bearer) headers['Authorization'] = `Bearer ${bearer}`;
+
+            try {
+                const response = await fetch(baseUrl() + path, {
+                    method,
+                    headers,
+                    body: data !== null ? JSON.stringify(data) : undefined
+                });
+                let body = null;
+                try { body = await response.json(); } catch (e) { /* no JSON body */ }
+                return { status: response.status, ok: response.ok, data: body };
+            } catch (error) {
+                return { status: 0, ok: false, data: null, error: error.message };
+            }
+        }
+
+        // --- Show results -------------------------------------------------------------------
+        // checks: a list of [description, true/false]. The test passes when every check is true.
+        function show(id, checks, data) {
+            const box = document.getElementById(id);
+            const passed = checks.filter(c => c[1]).length;
+            const allPass = passed === checks.length;
+
+            const result = document.createElement('div');
+            result.className = 'test-result ' + (allPass ? 'pass' : 'fail');
+
+            const title = document.createElement('strong');
+            title.textContent = allPass ? `PASS (${passed}/${checks.length})` : `FAIL (${passed}/${checks.length})`;
+            result.appendChild(title);
+
+            const list = document.createElement('ul');
+            for (const [description, ok] of checks) {
+                const item = document.createElement('li');
+                item.textContent = (ok ? 'OK: ' : 'FAILED: ') + description;
+                list.appendChild(item);
+            }
+            result.appendChild(list);
+
+            if (data !== undefined && data !== null) {
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(data, null, 2);   // textContent: never run data as HTML
+                result.appendChild(pre);
+            }
+            box.replaceChildren(result);
+            return allPass;
+        }
+
+        function showNetworkError(id, result) {
+            const box = document.getElementById(id);
+            box.innerHTML = '<div class="test-result fail"><strong>FAIL: no response from the server</strong>' +
+                '<ul><li>Are the containers running? (<code>docker compose ps</code>)</li>' +
+                '<li>Does the API Base URL match?</li></ul></div>';
+            return false;
+        }
+
+        // Log in again if a test needs a token and we do not have one.
+        async function ensureToken() {
+            if (token) return;
+            const result = await request('/login', 'POST', credentials());
+            if (result.ok && result.data) setToken(result.data.token);
+        }
+
+        // Create a student if a test needs one and we do not have one.
+        async function ensureCreated() {
+            if (createdId) return;
+            await ensureToken();
+            const result = await request('/students', 'POST', newStudent(), token);
+            if (result.status === 201) createdId = result.data.data.id;
+        }
+
+        // --- Part 1: Connection and login -----------------------------------------------------
+        async function testConnection() {
+            const r = await request('/students');
+            if (r.status === 0) return showNetworkError('t11', r);
+            return show('t11', [
+                ['status is 200', r.status === 200],
+                ['success is true', r.data && r.data.success === true],
+                ['data is an array', r.data && Array.isArray(r.data.data)]
+            ], r.data);
+        }
+
+        async function testWrongPassword() {
+            const r = await request('/login', 'POST', { email: credentials().email, password: 'wrong-password' });
+            if (r.status === 0) return showNetworkError('t12', r);
+            return show('t12', [
+                ['status is 401', r.status === 401],
+                ['no token in the response', !r.data || !r.data.token]
+            ], r.data);
+        }
+
+        async function testLogin() {
+            const r = await request('/login', 'POST', credentials());
+            if (r.status === 0) return showNetworkError('t13', r);
+            const ok = r.status === 200 && r.data && typeof r.data.token === 'string';
+            if (ok) setToken(r.data.token);
+            return show('t13', [
+                ['status is 200', r.status === 200],
+                ['token is a string', ok],
+                ['token looks like "id|secret"', ok && r.data.token.includes('|')],
+                ['token_type is Bearer', r.data && r.data.token_type === 'Bearer']
+            ], r.data);
+        }
+
+        // --- Part 2: Bearer token on a protected route ---------------------------------------
+        async function testMissingToken() {
+            const r = await request('/me');
+            if (r.status === 0) return showNetworkError('t21', r);
+            return show('t21', [['status is 401', r.status === 401]], r.data);
+        }
+
+        async function testInvalidToken() {
+            const r = await request('/me', 'GET', null, 'invalid-token');
+            if (r.status === 0) return showNetworkError('t22', r);
+            return show('t22', [['status is 401', r.status === 401]], r.data);
+        }
+
+        async function testValidToken() {
+            await ensureToken();
+            const r = await request('/me', 'GET', null, token);
+            if (r.status === 0) return showNetworkError('t23', r);
+            return show('t23', [
+                ['status is 200', r.status === 200],
+                ['user email matches the login', r.data && r.data.user && r.data.user.email === credentials().email],
+                ['password is not in the response', r.data && r.data.user && !('password' in r.data.user)]
+            ], r.data);
+        }
+
+        // --- Part 3: Students ---------------------------------------------------------------------
+        async function testGetAll() {
+            const r = await request('/students');
+            if (r.status === 0) return showNetworkError('t31', r);
+            const students = r.data && r.data.data;
+            const list = Array.isArray(students) ? students : [];
+            return show('t31', [
+                ['status is 200', r.status === 200],
+                ['total matches the array length', list.length === (r.data && r.data.total)],
+                ['students have id, name, and email', list.length === 0 || (list[0].id && list[0].name && list[0].email)]
+            ], r.data);
+        }
+
+        async function testGetOne() {
+            const all = await request('/students');
+            if (all.status === 0) return showNetworkError('t32', all);
+            const first = all.data && all.data.data && all.data.data[0];
+            if (!first) return show('t32', [['the database has at least one student', false]]);
+
+            const r = await request(`/students/${first.id}`);
+            const missing = await request('/students/999999');
+            const student = r.data && r.data.data;
+            return show('t32', [
+                ['status is 200', r.status === 200],
+                ['id matches', student && student.id === first.id],
+                ['email contains @', student && typeof student.email === 'string' && student.email.includes('@')],
+                ['unknown id returns 404', missing.status === 404]
+            ], r.data);
+        }
+
+        async function testCreate() {
+            await ensureToken();
+            const student = newStudent();
+
+            const noToken = await request('/students', 'POST', student);           // no Bearer token
+            const r = await request('/students', 'POST', student, token);          // with Bearer token
+            if (r.status === 0) return showNetworkError('t33', r);
+
+            const created = r.data && r.data.data;
+            if (r.status === 201 && created) createdId = created.id;
+            return show('t33', [
+                ['without a token: status is 401', noToken.status === 401],
+                ['with a token: status is 201', r.status === 201],
+                ['id is a positive number', created && created.id > 0],
+                ['name and email match', created && created.name === student.name && created.email === student.email],
+                ['age and year match', created && created.age === student.age && created.year === student.year]
+            ], r.data);
+        }
+
+        async function testUpdate() {
+            await ensureCreated();
+            const r = await request(`/students/${createdId}`, 'PUT', { major: 'Data Science' }, token);
+            if (r.status === 0) return showNetworkError('t34', r);
+            const updated = r.data && r.data.data;
+            return show('t34', [
+                ['status is 200', r.status === 200],
+                ['major was updated', updated && updated.major === 'Data Science'],
+                ['name was not changed (only one field was sent)', updated && updated.name === 'Test Student']
+            ], r.data);
+        }
+
+        async function testDelete() {
+            await ensureCreated();
+            const id = createdId;
+            const r = await request(`/students/${id}`, 'DELETE', null, token);
+            if (r.status === 0) return showNetworkError('t35', r);
+            const verify = await request(`/students/${id}`);
+            if (r.status === 200) createdId = null;
+            return show('t35', [
+                ['status is 200', r.status === 200],
+                ['success is true', r.data && r.data.success === true],
+                ['a later GET returns 404', verify.status === 404]
+            ], r.data);
+        }
+
+        async function testValidation() {
+            await ensureToken();
+            const empty = await request('/students', 'POST', {}, token);
+            if (empty.status === 0) return showNetworkError('t36', empty);
+            const badEmail = await request('/students', 'POST', { ...newStudent(), email: 'not-an-email' }, token);
+            const badYear = await request('/students', 'POST', { ...newStudent(), year: 9 }, token);
+            return show('t36', [
+                ['empty body: status is 422', empty.status === 422],
+                ['empty body: errors mention name and email', empty.data && empty.data.errors && empty.data.errors.name && empty.data.errors.email],
+                ['bad email: errors.email exists', badEmail.status === 422 && badEmail.data.errors && badEmail.data.errors.email],
+                ['year 9: errors.year exists', badYear.status === 422 && badYear.data.errors && badYear.data.errors.year]
+            ], empty.data);
+        }
+
+        // --- Part 4: Logout -----------------------------------------------------------------------------
+        async function testLogout() {
+            await ensureToken();
+            const oldToken = token;
+            const r = await request('/logout', 'POST', null, oldToken);
+            if (r.status === 0) return showNetworkError('t41', r);
+            const after = await request('/me', 'GET', null, oldToken);   // the same token again
+            if (r.status === 200) setToken(null);
+            return show('t41', [
+                ['logout: status is 200', r.status === 200],
+                ['the same token now returns 401', after.status === 401]
+            ], r.data);
+        }
+
+        // --- Run everything in order ------------------------------------------------------------------
+        async function runAllTests() {
+            const box = document.getElementById('all');
+            const tests = [
+                ['Server Connection', testConnection], ['Wrong Password', testWrongPassword], ['Login', testLogin],
+                ['Missing Token', testMissingToken], ['Invalid Token', testInvalidToken], ['Valid Token', testValidToken],
+                ['Get All Students', testGetAll], ['Get One Student', testGetOne], ['Create Student', testCreate],
+                ['Update Student', testUpdate], ['Delete Student', testDelete], ['Validation Errors', testValidation],
+                ['Logout', testLogout]
+            ];
+
+            let passed = 0;
+            for (let i = 0; i < tests.length; i++) {
+                box.innerHTML = `<div class="test-result info">Running ${i + 1}/${tests.length}: ${tests[i][0]}...</div>`;
+                if (await tests[i][1]()) passed++;
+            }
+            box.innerHTML = `<div class="test-result ${passed === tests.length ? 'pass' : 'fail'}">` +
+                `<strong>${passed}/${tests.length} tests passed.</strong> Check each test above for details.</div>`;
+        }
+    </script>
+</body>
+</html>

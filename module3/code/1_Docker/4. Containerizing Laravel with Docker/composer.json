@@ -1,0 +1,12 @@
+{
+  "name": "ase230/laravel-docker-example",
+  "description": "Optional shortcuts for the course Docker example",
+  "type": "project",
+  "license": "MIT",
+  "scripts": {
+    "start": "docker compose up -d --wait",
+    "stop": "docker compose down",
+    "shell": "docker compose exec php bash",
+    "artisan": "docker compose exec php php artisan"
+  }
+}

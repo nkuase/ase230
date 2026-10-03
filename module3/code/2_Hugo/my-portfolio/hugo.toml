@@ -1,0 +1,6 @@
+baseURL = 'https://yourusername.github.io/'
+title = 'John Doe'
+
+[params]
+  github = 'https://github.com/yourusername'
+  email = 'john@example.com'

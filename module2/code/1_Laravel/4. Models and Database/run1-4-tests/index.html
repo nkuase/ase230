@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Student API Tests</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #666; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .test-section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .config { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; }
+        .config label { display: inline-block; width: 110px; }
+        .config input { width: 300px; padding: 4px; margin: 3px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        ul { margin: 6px 0; padding-left: 20px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Laravel Student API Tests</h1>
+        <p>This page calls the Laravel API (<code>run1-4.sh</code> or <code>run1-6-2.sh</code>) from the browser with <code>fetch()</code>.
+           Each button runs one test. Read the code at the bottom of this file to see how the requests are made.</p>
+
+        <div class="config">
+            <h3>Configuration</h3>
+            <p>Start the server first: <code>cd student-api &amp;&amp; php artisan serve --port=8080</code></p>
+            <div><label for="apiUrl">API Base URL:</label> <input id="apiUrl" value="http://localhost:8080"></div>
+            <p>This API has no login: every route is public.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 1: Basic Connection Tests</h2>
+
+        <div class="test-section">
+            <h3>Test 1.1: Server Connection</h3>
+            <p>GET /api/students: can we reach the server and get students?</p>
+            <button onclick="testConnection()">Run Test</button>
+            <div id="t11"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1.2: API Test Endpoint and Database</h3>
+            <p>GET /api/test returns API information, including the database name.</p>
+            <button onclick="testApiInfo()">Run Test</button>
+            <div id="t12"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 2: Functional Tests (Unit Test Style)</h2>
+
+        <div class="test-section">
+            <h3>Test 2.1: Get All Students</h3>
+            <p>GET /api/students returns the expected data structure.</p>
+            <button onclick="testGetAll()">Run Test</button>
+            <div id="t21"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.2: Get One Student</h3>
+            <p>GET /api/students/{id} returns one student. An unknown id returns 404.</p>
+            <button onclick="testGetOne()">Run Test</button>
+            <div id="t22"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.3: Create Student</h3>
+            <p>POST /api/students creates a student and returns 201.</p>
+            <button onclick="testCreate()">Run Test</button>
+            <div id="t23"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.4: Update Student</h3>
+            <p>PUT /api/students/{id} changes one field. Other fields stay the same.</p>
+            <button onclick="testUpdate()">Run Test</button>
+            <div id="t24"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2.5: Delete Student</h3>
+            <p>DELETE /api/students/{id} removes the student. A later GET returns 404.</p>
+            <button onclick="testDelete()">Run Test</button>
+            <div id="t25"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Part 3: Error Cases and Extra Endpoints</h2>
+
+        <div class="test-section">
+            <h3>Test 3.1: Validation Errors</h3>
+            <p>Bad input returns 422 with an <code>errors</code> object. A duplicate email is also rejected.</p>
+            <button onclick="testValidation()">Run Test</button>
+            <div id="t31"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3.2: Search and Statistics</h3>
+            <p>GET /api/students/search?name=X and GET /api/students/stats.</p>
+            <button onclick="testSearchAndStats()">Run Test</button>
+            <div id="t32"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Run All Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="all"></div>
+    </div>
+
+    <script>
+        // The id of the student created by the tests, so update and delete can use it.
+        let createdId = null;
+
+        const baseUrl = () => document.getElementById('apiUrl').value.replace(/\/$/, '') + '/api';
+        const newStudent = () => ({
+            name: 'Test Student',
+            email: `test.${Date.now()}@university.edu`,   // unique, because email must be unique
+            age: 20,
+            major: 'Computer Science',
+            year: 2
+        });
+
+        // --- One helper for all HTTP requests ---------------------------------------------
+        async function request(path, method = 'GET', data = null) {
+            // Accept: application/json makes Laravel return JSON errors (404, 422)
+            // instead of an HTML error page.
+            const headers = { 'Accept': 'application/json' };
+            if (data !== null) headers['Content-Type'] = 'application/json';
+
+            try {
+                const response = await fetch(baseUrl() + path, {
+                    method,
+                    headers,
+                    body: data !== null ? JSON.stringify(data) : undefined
+                });
+                let body = null;
+                try { body = await response.json(); } catch (e) { /* no JSON body */ }
+                return { status: response.status, ok: response.ok, data: body };
+            } catch (error) {
+                return { status: 0, ok: false, data: null, error: error.message };
+            }
+        }
+
+        // --- Show results -------------------------------------------------------------------
+        // checks: a list of [description, true/false]. The test passes when every check is true.
+        function show(id, checks, data) {
+            const box = document.getElementById(id);
+            const passed = checks.filter(c => c[1]).length;
+            const allPass = passed === checks.length;
+
+            const result = document.createElement('div');
+            result.className = 'test-result ' + (allPass ? 'pass' : 'fail');
+
+            const title = document.createElement('strong');
+            title.textContent = allPass ? `PASS (${passed}/${checks.length})` : `FAIL (${passed}/${checks.length})`;
+            result.appendChild(title);
+
+            const list = document.createElement('ul');
+            for (const [description, ok] of checks) {
+                const item = document.createElement('li');
+                item.textContent = (ok ? 'OK: ' : 'FAILED: ') + description;
+                list.appendChild(item);
+            }
+            result.appendChild(list);
+
+            if (data !== undefined && data !== null) {
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(data, null, 2);   // textContent: never run data as HTML
+                result.appendChild(pre);
+            }
+            box.replaceChildren(result);
+            return allPass;
+        }
+
+        function showNetworkError(id) {
+            document.getElementById(id).innerHTML =
+                '<div class="test-result fail"><strong>FAIL: no response from the server</strong>' +
+                '<ul><li>Is <code>php artisan serve --port=8080</code> running?</li>' +
+                '<li>Does the API Base URL match?</li></ul></div>';
+            return false;
+        }
+
+        // Create a student if a test needs one and we do not have one.
+        async function ensureCreated() {
+            if (createdId) return;
+            const result = await request('/students', 'POST', newStudent());
+            if (result.status === 201) createdId = result.data.data.id;
+        }
+
+        // --- Part 1: Connection ---------------------------------------------------------------
+        async function testConnection() {
+            const r = await request('/students');
+            if (r.status === 0) return showNetworkError('t11');
+            return show('t11', [
+                ['status is 200', r.status === 200],
+                ['success is true', r.data && r.data.success === true],
+                ['data is an array', r.data && Array.isArray(r.data.data)]
+            ], r.data);
+        }
+
+        async function testApiInfo() {
+            const r = await request('/test');
+            if (r.status === 0) return showNetworkError('t12');
+            return show('t12', [
+                ['status is 200', r.status === 200],
+                ['has a message', r.data && typeof r.data.message === 'string'],
+                ['lists the endpoints', r.data && r.data.endpoints && Object.keys(r.data.endpoints).length > 0],
+                ['database is studentdb (shared with Module 1)', r.data && r.data.database === 'studentdb']
+            ], r.data);
+        }
+
+        // --- Part 2: CRUD -----------------------------------------------------------------------
+        async function testGetAll() {
+            const r = await request('/students');
+            if (r.status === 0) return showNetworkError('t21');
+            const list = r.data && Array.isArray(r.data.data) ? r.data.data : [];
+            return show('t21', [
+                ['status is 200', r.status === 200],
+                ['total matches the array length', list.length === (r.data && r.data.total)],
+                ['students have id, name, and email', list.length === 0 || (list[0].id && list[0].name && list[0].email)]
+            ], r.data);
+        }
+
+        async function testGetOne() {
+            const all = await request('/students');
+            if (all.status === 0) return showNetworkError('t22');
+            const first = all.data && all.data.data && all.data.data[0];
+            if (!first) return show('t22', [['the database has at least one student', false]]);
+
+            const r = await request(`/students/${first.id}`);
+            const missing = await request('/students/999999');
+            const student = r.data && r.data.data;
+            return show('t22', [
+                ['status is 200', r.status === 200],
+                ['id matches', student && student.id === first.id],
+                ['email contains @', student && typeof student.email === 'string' && student.email.includes('@')],
+                ['unknown id returns 404', missing.status === 404]
+            ], r.data);
+        }
+
+        async function testCreate() {
+            const student = newStudent();
+            const r = await request('/students', 'POST', student);
+            if (r.status === 0) return showNetworkError('t23');
+
+            const created = r.data && r.data.data;
+            if (r.status === 201 && created) createdId = created.id;
+            return show('t23', [
+                ['status is 201', r.status === 201],
+                ['id is a positive number', created && created.id > 0],
+                ['name and email match', created && created.name === student.name && created.email === student.email],
+                ['age, major, and year match', created && created.age === student.age && created.major === student.major && created.year === student.year],
+                ['no created_at (the shared table has no timestamps)', created && !('created_at' in created)]
+            ], r.data);
+        }
+
+        async function testUpdate() {
+            await ensureCreated();
+            const r = await request(`/students/${createdId}`, 'PUT', { major: 'Data Science' });
+            if (r.status === 0) return showNetworkError('t24');
+            const updated = r.data && r.data.data;
+            return show('t24', [
+                ['status is 200', r.status === 200],
+                ['major was updated', updated && updated.major === 'Data Science'],
+                ['name was not changed (only one field was sent)', updated && updated.name === 'Test Student']
+            ], r.data);
+        }
+
+        async function testDelete() {
+            await ensureCreated();
+            const id = createdId;
+            const r = await request(`/students/${id}`, 'DELETE');
+            if (r.status === 0) return showNetworkError('t25');
+            const verify = await request(`/students/${id}`);
+            if (r.status === 200) createdId = null;
+            return show('t25', [
+                ['status is 200', r.status === 200],
+                ['success is true', r.data && r.data.success === true],
+                ['a later GET returns 404', verify.status === 404]
+            ], r.data);
+        }
+
+        // --- Part 3: Errors and extra endpoints ---------------------------------------------------
+        async function testValidation() {
+            const empty = await request('/students', 'POST', {});
+            if (empty.status === 0) return showNetworkError('t31');
+            const badEmail = await request('/students', 'POST', { ...newStudent(), email: 'not-an-email' });
+            const badYear = await request('/students', 'POST', { ...newStudent(), year: 9 });
+
+            const all = await request('/students');
+            const first = all.data && all.data.data && all.data.data[0];
+            const duplicate = first ? await request('/students', 'POST', { ...newStudent(), email: first.email }) : null;
+
+            return show('t31', [
+                ['empty body: status is 422', empty.status === 422],
+                ['empty body: errors mention name and email', empty.data && empty.data.errors && empty.data.errors.name && empty.data.errors.email],
+                ['bad email: errors.email exists', badEmail.status === 422 && badEmail.data.errors && badEmail.data.errors.email],
+                ['year 9: errors.year exists', badYear.status === 422 && badYear.data.errors && badYear.data.errors.year],
+                ['duplicate email: status is 422', duplicate !== null && duplicate.status === 422]
+            ], empty.data);
+        }
+
+        async function testSearchAndStats() {
+            const all = await request('/students');
+            if (all.status === 0) return showNetworkError('t32');
+            const first = all.data && all.data.data && all.data.data[0];
+            if (!first) return show('t32', [['the database has at least one student', false]]);
+
+            const word = first.name.split(' ')[0];
+            const search = await request(`/students/search?name=${encodeURIComponent(word)}`);
+            const noName = await request('/students/search');
+            const stats = await request('/students/stats');
+            const found = search.data && Array.isArray(search.data.data) ? search.data.data : [];
+
+            return show('t32', [
+                [`search "${word}": status is 200`, search.status === 200],
+                ['search finds the student', found.some(s => s.id === first.id)],
+                ['search without a name: status is 400', noName.status === 400],
+                ['stats: status is 200', stats.status === 200],
+                ['stats: total_students is a number', stats.data && stats.data.data && typeof stats.data.data.total_students === 'number']
+            ], stats.data);
+        }
+
+        // --- Run everything in order ------------------------------------------------------------------
+        async function runAllTests() {
+            const box = document.getElementById('all');
+            const tests = [
+                ['Server Connection', testConnection], ['API Test Endpoint', testApiInfo],
+                ['Get All Students', testGetAll], ['Get One Student', testGetOne],
+                ['Create Student', testCreate], ['Update Student', testUpdate], ['Delete Student', testDelete],
+                ['Validation Errors', testValidation], ['Search and Statistics', testSearchAndStats]
+            ];
+
+            let passed = 0;
+            for (let i = 0; i < tests.length; i++) {
+                box.innerHTML = `<div class="test-result info">Running ${i + 1}/${tests.length}: ${tests[i][0]}...</div>`;
+                if (await tests[i][1]()) passed++;
+            }
+            box.innerHTML = `<div class="test-result ${passed === tests.length ? 'pass' : 'fail'}">` +
+                `<strong>${passed}/${tests.length} tests passed.</strong> Check each test above for details.</div>`;
+        }
+    </script>
+</body>
+</html>
